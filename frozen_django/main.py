@@ -1,3 +1,4 @@
+from functools import partial
 import logging
 from mimetypes import guess_type
 import os
@@ -6,8 +7,8 @@ from urllib.parse import urljoin, urlparse
 from bs4 import BeautifulSoup
 from django.conf import settings
 from django.test.client import RequestFactory
-from django.urls import get_urlconf, get_resolver, URLPattern
-from django.urls import reverse, NoReverseMatch
+from django.urls import get_resolver, URLResolver
+from django.urls import resolve, reverse, NoReverseMatch, Resolver404
 from django.utils.module_loading import import_string
 
 _logger = logging.getLogger(__name__)
@@ -15,17 +16,17 @@ _logger = logging.getLogger(__name__)
 
 def walk_resolvers(view_name, *patterns):
     for pat in patterns:
-        if isinstance(pat, URLPattern):
-            if not pat.name:
-                continue
-            callback = pat.callback
-            cls = getattr(callback, 'view_class', callback)
-            if view_name == cls.__module__ + '.' + cls.__qualname__:
-                yield pat.name, callback
+        if isinstance(pat, URLResolver):
+            for name in walk_resolvers(view_name, *pat.url_patterns):
+                yield name
             continue
 
-        for name, callback in walk_resolvers(view_name, *pat.url_patterns):
-            yield name, callback
+        if not pat.name:
+            continue
+        callback = pat.callback
+        cls = getattr(callback, 'view_class', callback)
+        if view_name == cls.__module__ + '.' + cls.__qualname__:
+            yield pat.name
 
 
 def find_next_http_page(response):
@@ -59,36 +60,44 @@ def find_next_html_page(response, content):
     return None
 
 
-def follow_url(url, view, frozen_dest):
-    request = RequestFactory().get(url)
+def follow_url(url, host, dest):
+    try:
+        route_match = resolve(url)
+    except Resolver404:
+        return None
+    view = partial(route_match.func, *route_match.args, **route_match.kwargs)
 
     middlewares = settings.FROZEN_MIDDLEWARE or ()
     middlewares = (import_string(x) for x in middlewares)
     for middleware in middlewares:
         view = middleware(view)
 
+    request = RequestFactory().get(urljoin(host, url.lstrip('/')))
     response = view(request)
     content = response.render().content.decode()
 
     filepath = urlparse(url).path
-    fullpath = os.path.join(frozen_dest, filepath.lstrip('/'))
+    fullpath = os.path.join(dest, filepath.lstrip('/'))
     os.makedirs(os.path.dirname(fullpath), exist_ok=True)
     with open(fullpath, 'w') as f:
         f.write(content)
 
     mime, _ = guess_type(url)
     if mime == 'text/html':
-        return find_next_html_page(response, content)
-    return find_next_http_page(response)
+        next_url = find_next_html_page(response, content)
+    else:
+        next_url = find_next_http_page(response)
+    if next_url:
+        return urlparse(next_url).path
+    return None
 
 
 def generate_static_view(view_name, frozen_host, frozen_dest=None,
         **kwargs):
     base_dir = frozen_dest or settings.FROZEN_ROOT
-    urlconf = get_urlconf()
-    resolver = get_resolver(urlconf)
+    resolver = get_resolver()
 
-    for route_name, view in walk_resolvers(view_name, *resolver.url_patterns):
+    for route_name in walk_resolvers(view_name, *resolver.url_patterns):
         try:
             url = reverse(route_name, kwargs=kwargs)
         except NoReverseMatch:
@@ -96,7 +105,6 @@ def generate_static_view(view_name, frozen_host, frozen_dest=None,
         # Only if they already have file extensions
         if not os.path.splitext(url)[1]:
             continue
-        url = urljoin(frozen_host, url.lstrip('/'))
 
         while url:
-            url = follow_url(url, view, base_dir)
+            url = follow_url(url, frozen_host, base_dir)

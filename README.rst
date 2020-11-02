@@ -56,8 +56,12 @@ File novel/urls.py:
     from website import views
 
     urlpatterns = [
-        path('<str:slug>.<str:format>', ViewSerie.as_view(), name='DisplaySerie'),
+        # must be before ViewSerie because that one is also a match
         path('index.html', views.Home.as_view(), name='Home'),
+        path('<str:slug>.<str:format>', ViewSerie.as_view(),
+            name='DisplaySerie'),
+        path('index/pages/<int:page>.html', views.Home.as_view(),
+            name='HomePages'),
     ]
 
 
