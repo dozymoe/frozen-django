@@ -1,5 +1,5 @@
 FROZEN DJANGO
--------------
+=============
 
 Export webpages created by your Django views into html files.
 
@@ -10,26 +10,35 @@ The assumption is that the build process will be triggered by Django signals,
 for example when a BlogPost was created, and will only rebuild the related
 html (or json) files.
 
+Inspired by:
+
+* django-bakery_
+* django-distill_
+
 
 Requirements
-============
+------------
 
- * add `frozen_django` to your INSTALLED_APPS
- * will only process named urls
- * will only process urls with file extensions (.html, .json, .js, .xml, etc.)
- * Django Views with pagination must have `<link rel="next">` in their content
+* add `frozen_django` to your INSTALLED_APPS
+* will only process named urls
+* will only process urls with file extensions (.html, .json, .js, .xml, etc.)
+* Django Views with pagination must have `<link rel="next">` in their content
 
 
 Settings
-========
+--------
 
- * FROZEN_URL (optional, must be absolute url, `https://example.com/`)
- * FROZEN_ROOT (optional)
- * FROZEN_MIDDLEWARE (optional)
+* FROZEN_URL (optional, must be absolute url, https://example.com/)
+* FROZEN_ROOT (optional)
+* FROZEN_MIDDLEWARE (optional)
 
 
 API
-===
+---
 
- * Django Command `freeze_view`
- * uwsgi task `freeze_view`
+* Django Command `freeze_view`
+* uwsgi task `freeze_view`
+
+
+.. _django-bakery: https://pypi.org/project/django-bakery/
+.. _django-distill: https://pypi.org/project/django-distill/
