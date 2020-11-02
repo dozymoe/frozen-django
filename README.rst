@@ -23,7 +23,7 @@ Requirements
 * will only process named urls
 * will only process urls with file extensions (.html, .json, .js, .xml, etc.)
 * Django Views with pagination must have **Link** HTTP header or
-  html tag `<link rel="next">` in their content
+  html tag `<link rel="next" />` in their content
 
 
 Settings
@@ -49,6 +49,39 @@ Examples
 
 Here is an example of all pages rebuild:
 
+File novel/urls.py:
+
+.. code-block:: python
+
+    from django.urls import path
+    #-
+    from novel_serie.views import ViewSerie
+    from website import views
+
+    urlpatterns = [
+        path('<str:slug>.<str:format>', ViewSerie.as_view(), name='DisplaySerie'),
+        path('index.html', views.Home.as_view(), name='Home'),
+    ]
+
+
+File website/views.py
+
+.. code-block:: python
+
+    from django.views.generic import ListView
+    #-
+    from novel_serie.models import Serie
+
+    class Home(ListView):
+        template_name = 'website/home.html'
+        paginate_by = 2
+
+        def get_queryset(self):
+            return Serie.objects.all()
+
+
+File website/management/commands/build.py
+
 .. code-block:: python
 
     from django.conf import settings
@@ -56,7 +89,6 @@ Here is an example of all pages rebuild:
     from frozen_django.tasks_uwsgi import freeze_view
     #-
     from novel_serie.models import Serie
-
 
     class Command(BaseCommand):
         help = "Build static html files."
@@ -66,7 +98,7 @@ Here is an example of all pages rebuild:
                 freeze_view(view_name, base_url=host, **kwargs)
 
         def handle(self, *args, **kwargs):
-            self.build('website.views.Home')
+            self.build('website.views.Home') # will also build pages.
 
             for obj in Serie.objects.all():
                 self.build('novel_serie.views.ViewSerie', slug=obj.slug,
