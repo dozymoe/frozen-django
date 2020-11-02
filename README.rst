@@ -19,11 +19,11 @@ Inspired by:
 Requirements
 ------------
 
-* add :python:`frozen_django` to your :python:`INSTALLED_APPS`
+* add `frozen_django` to your `INSTALLED_APPS`
 * will only process named urls
 * will only process urls with file extensions (.html, .json, .js, .xml, etc.)
-* Django Views with pagination must have *Link* HTTP header or
-  html tag :html:`<link rel="next">` in their content
+* Django Views with pagination must have **Link** HTTP header or
+  html tag `<link rel="next">` in their content
 
 
 Settings
@@ -33,12 +33,15 @@ Settings
 * FROZEN_ROOT (optional)
 * FROZEN_MIDDLEWARE (optional)
 
+I am still conflicted about what FROZEN_URL should be, since you could just use
+ALLOWED_HOSTS.
+
 
 API
 ---
 
-* Django Command :python:`freeze_view`
-* uwsgi task :python:`freeze_view`
+* Django Command `freeze_view`
+* uwsgi task `freeze_view`
 
 
 Examples
@@ -72,9 +75,3 @@ Here is an example of all pages rebuild:
 
 .. _django-bakery: https://pypi.org/project/django-bakery/
 .. _django-distill: https://pypi.org/project/django-distill/
-
-.. role:: python(code)
-   :language: python
-
-.. role:: html(code)
-   :language: html
