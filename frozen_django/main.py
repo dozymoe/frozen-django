@@ -29,7 +29,10 @@ def walk_resolvers(view_name, *patterns):
 
 
 def find_next_http_page(response):
-    header = response['Link']
+    try:
+        header = response['Link']
+    except KeyError:
+        header = None
     if not header:
         return None
     links = [x.strip() for x in header.split(',')]
