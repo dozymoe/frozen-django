@@ -1,5 +1,6 @@
 from bs4 import BeautifulSoup
 import logging
+from mimetypes import guess_type
 import os
 from urllib.parse import urljoin, urlparse
 #-
@@ -27,6 +28,34 @@ def walk_resolvers(view_name, *patterns):
             yield name, callback
 
 
+def find_next_http_page(response):
+    header = response['Link']
+    if not header:
+        return None
+    links = [x.strip() for x in header.split(',')]
+    for link in links:
+        url, *opts = [x.strip() for x in link.split(';')]
+        for opt in opts:
+            key, val = opt.split('=')
+            val = val.strip('\'"')
+            if key == 'rel' and val == 'next':
+                return url.strip('<>')
+    return None
+
+
+def find_next_html_page(response, content):
+    next_link = find_next_http_page(response)
+    if next_link:
+        return next_link
+
+    # Scan content for next link (pagination)
+    bs = BeautifulSoup(content, 'html.parser')
+    link = bs.find('link', {'rel': 'next'})
+    if link:
+        return link['href']
+    return None
+
+
 def follow_url(url, view, frozen_dest):
     request = RequestFactory().get(url)
 
@@ -44,12 +73,10 @@ def follow_url(url, view, frozen_dest):
     with open(fullpath, 'w') as f:
         f.write(content)
 
-    # Scan content for next link (pagination)
-    bs = BeautifulSoup(content, 'html.parser')
-    link = bs.find('link', {'rel': 'next'})
-    if link:
-        return link['href']
-    return None
+    mime, _ = guess_type(url)
+    if mime == 'text/html':
+        return find_next_html_page(response, content)
+    return find_next_http_page(response)
 
 
 def generate_static_view(view_name, frozen_host=None, frozen_dest=None,
