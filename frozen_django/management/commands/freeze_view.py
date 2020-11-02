@@ -1,7 +1,9 @@
-from django.core.management.base import BaseCommand
-from frozen_django.main import generate_static_view
 import json
 from urllib.parse import parse_qs
+#-
+from django.core.management.base import BaseCommand
+#-
+from frozen_django.main import generate_static_view
 
 class Command(BaseCommand):
     help = "Build static html files from Django views."

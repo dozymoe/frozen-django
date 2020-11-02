@@ -19,11 +19,11 @@ Inspired by:
 Requirements
 ------------
 
-* add `frozen_django` to your `INSTALLED_APPS`
+* add :python:`frozen_django` to your :python:`INSTALLED_APPS`
 * will only process named urls
 * will only process urls with file extensions (.html, .json, .js, .xml, etc.)
-* Django Views with pagination must have `Link` HTTP header or
-  html tag `<link rel="next">` in their content
+* Django Views with pagination must have *Link* HTTP header or
+  html tag :html:`<link rel="next">` in their content
 
 
 Settings
@@ -37,9 +37,44 @@ Settings
 API
 ---
 
-* Django Command `freeze_view`
-* uwsgi task `freeze_view`
+* Django Command :python:`freeze_view`
+* uwsgi task :python:`freeze_view`
+
+
+Examples
+--------
+
+Here is an example of all pages rebuild:
+
+.. code-block:: python
+
+    from django.conf import settings
+    from django.core.management.base import BaseCommand
+    from frozen_django.tasks_uwsgi import freeze_view
+    #-
+    from novel_serie.models import Serie
+
+
+    class Command(BaseCommand):
+        help = "Build static html files."
+
+        def build(self, view_name, **kwargs):
+            for host in settings.ALLOWED_HOSTS:
+                freeze_view(view_name, base_url=host, **kwargs)
+
+        def handle(self, *args, **kwargs):
+            self.build('website.views.Home')
+
+            for obj in Serie.objects.all():
+                self.build('novel_serie.views.ViewSerie', slug=obj.slug,
+                        format='html')
 
 
 .. _django-bakery: https://pypi.org/project/django-bakery/
 .. _django-distill: https://pypi.org/project/django-distill/
+
+.. role:: python(code)
+   :language: python
+
+.. role:: html(code)
+   :language: html

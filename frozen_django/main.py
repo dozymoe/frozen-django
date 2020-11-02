@@ -1,12 +1,12 @@
-from bs4 import BeautifulSoup
 import logging
 from mimetypes import guess_type
 import os
 from urllib.parse import urljoin, urlparse
 #-
+from bs4 import BeautifulSoup
 from django.conf import settings
 from django.test.client import RequestFactory
-from django.urls import get_urlconf, get_resolver, URLPattern, URLResolver
+from django.urls import get_urlconf, get_resolver, URLPattern
 from django.urls import reverse, NoReverseMatch
 from django.utils.module_loading import import_string
 
