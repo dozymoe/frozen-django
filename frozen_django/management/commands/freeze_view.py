@@ -11,7 +11,6 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('view_names', nargs='*', type=str, default=[])
         parser.add_argument('--base-url', action='store', dest='base_url',
-                default=None,
                 help="Specify base url (must be absolute url, ex. https://example.com/).") # pylint:disable=line-too-long
         parser.add_argument('--dest', action='store', dest='dest', default=None,
                 help="Specify destination directory.")

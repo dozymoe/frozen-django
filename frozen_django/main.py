@@ -82,9 +82,8 @@ def follow_url(url, view, frozen_dest):
     return find_next_http_page(response)
 
 
-def generate_static_view(view_name, frozen_host=None, frozen_dest=None,
+def generate_static_view(view_name, frozen_host, frozen_dest=None,
         **kwargs):
-    base_url = frozen_host or settings.FROZEN_URL
     base_dir = frozen_dest or settings.FROZEN_ROOT
     urlconf = get_urlconf()
     resolver = get_resolver(urlconf)
@@ -97,7 +96,7 @@ def generate_static_view(view_name, frozen_host=None, frozen_dest=None,
         # Only if they already have file extensions
         if not os.path.splitext(url)[1]:
             continue
-        url = urljoin(base_url, url.lstrip('/'))
+        url = urljoin(frozen_host, url.lstrip('/'))
 
         while url:
             url = follow_url(url, view, base_dir)

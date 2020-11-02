@@ -29,12 +29,8 @@ Requirements
 Settings
 --------
 
-* FROZEN_URL (optional, must be absolute url, https://example.com/)
-* FROZEN_ROOT (optional)
+* FROZEN_ROOT (should be filled)
 * FROZEN_MIDDLEWARE (optional)
-
-I am still conflicted about what FROZEN_URL should be, since you could just use
-ALLOWED_HOSTS.
 
 
 API
