@@ -1,9 +1,9 @@
-from uwsgi_tasks import task, TaskExecutor # pylint:disable=import-error
+from celery import shared_task # pylint:disable=import-error
 #-
 from frozen_django.main import generate_static_view
 
 
-@task(executor=TaskExecutor.SPOOLER)
+@shared_task
 def freeze_view(view_name, base_url, dest=None, **kwargs):
     """
     Build html files as background task

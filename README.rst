@@ -37,7 +37,8 @@ API
 ---
 
 * Django Command `freeze_view`
-* uwsgi task `freeze_view`
+* `frozen_django.tasks_celery.freeze_view`
+* `frozen_django.tasks_uwsgi.freeze_view`
 
 
 Examples
