@@ -1,4 +1,5 @@
 from celery import shared_task # pylint:disable=import-error
+from django.conf import settings
 #-
 from frozen_django.main import generate_static_view
 
@@ -16,3 +17,8 @@ def freeze_view(view_name, base_url, dest=None, **kwargs):
     """
     generate_static_view(view_name, frozen_host=base_url, frozen_dest=dest,
             **kwargs)
+
+
+def hosts_freeze_view(view_name, dest=None, **kwargs):
+    for host in settings.ALLOWED_HOSTS:
+        freeze_view(view_name, base_url=host, dest=dest, **kwargs)
