@@ -21,7 +21,7 @@ REQUIRED = [
 ]
 
 # What packages are optional?
-EXTRAS = {
+EXTRAS = [
     'celery',
     'uwsgi-tasks',
 ]
