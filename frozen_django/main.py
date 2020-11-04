@@ -1,3 +1,9 @@
+"""App entry point, main function
+
+.. module:: frozen_django.main
+.. moduleauthor:: Fahri Reza <i@dozy.moe>
+
+"""
 from functools import partial
 import logging
 from mimetypes import guess_type
@@ -15,6 +21,16 @@ _logger = logging.getLogger(__name__)
 
 
 def walk_resolvers(view_name, *patterns):
+    """Traverse all of Django routes for find specific view.
+
+    :param view_name: Fully qualified name of view
+    :type view_name: str.
+
+    .. note::
+
+       An example of view_name: website.views.Home
+
+    """
     for pat in patterns:
         if isinstance(pat, URLResolver):
             for name in walk_resolvers(view_name, *pat.url_patterns):
@@ -30,6 +46,12 @@ def walk_resolvers(view_name, *patterns):
 
 
 def find_next_http_page(response):
+    """Check Response's HTTP Headers for Link header.
+
+    :param response: Return value from view
+    :type view_name: HttpResponse.
+
+    """
     try:
         header = response['Link']
     except KeyError:
@@ -48,12 +70,20 @@ def find_next_http_page(response):
 
 
 def find_next_html_page(response, content):
+    """Check Response's html content for `link` tag with attribute rel="next"
+
+    :param response: Return value from view
+    :type view_name: HttpResponse.
+    :param content: Text content of response
+    :type content: str.
+
+    """
     next_link = find_next_http_page(response)
     if next_link:
         return next_link
 
     # Scan content for next link (pagination)
-    bs = BeautifulSoup(content, 'html.parser')
+    bs = BeautifulSoup(content, 'html.parser') # pylint:disable=invalid-name
     link = bs.find('link', {'rel': 'next'})
     if link:
         return link['href']
@@ -61,6 +91,24 @@ def find_next_html_page(response, content):
 
 
 def follow_url(url, host, dest):
+    """Capture response body from a url, follow next pagination page
+
+    :param url: Relative url, valid Django route
+    :type url: str.
+    :param host: Absolute url, base url
+    :type host: str.
+    :param dest: Output directory for generated files
+    :type dest: str.
+
+    .. note::
+
+       An example of url: /index.html
+
+       An example of host: https://example.com/
+
+       An example of dest: /var/www/html
+
+    """
     try:
         route_match = resolve(url)
     except Resolver404:
@@ -79,7 +127,7 @@ def follow_url(url, host, dest):
     filepath = urlparse(url).path
     fullpath = os.path.join(dest, filepath.lstrip('/'))
     os.makedirs(os.path.dirname(fullpath), exist_ok=True)
-    with open(fullpath, 'w') as f:
+    with open(fullpath, 'w') as f: # pylint:disable=invalid-name
         f.write(content)
 
     mime, _ = guess_type(url)
@@ -94,6 +142,24 @@ def follow_url(url, host, dest):
 
 def generate_static_view(view_name, frozen_host, frozen_dest=None,
         **kwargs):
+    """Capture the contents of all urls related to specific view
+
+    :param view_name: Fully qualified name of view
+    :type view_name: str.
+    :param frozen_host: absolute url, base url
+    :type frozen_host: str.
+    :param frozen_dest: output directory for generated files
+    :type forzen_dest: str.
+
+    .. note::
+
+       An example of view_name: website.views.Home
+
+       An example of frozen_host: https://example.com/
+
+       An example of frozen_dest: /var/www/html
+
+    """
     base_dir = frozen_dest or settings.FROZEN_ROOT
     resolver = get_resolver()
 

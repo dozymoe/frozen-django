@@ -1,0 +1,9 @@
+include frozen_django/README.rst
+exclude run
+exclude wscipt
+exclude requirements.txt
+exclude build.yml
+exclude .git
+exclude MANIFEST.in
+prune etc
+prune lib

@@ -1,0 +1,3 @@
+[submodule "lib/fireh_runner"]
+	path = lib/fireh_runner
+	url = https://github.com/dozymoe/fireh_runner

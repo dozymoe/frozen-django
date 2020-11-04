@@ -1,0 +1,28 @@
+{
+    "modules": [
+        "lib.fireh_runner.modules.setup",
+        "lib.fireh_runner.modules.python",
+        "lib.fireh_runner.modules.waf",
+        "lib.fireh_runner.modules.virtualenv"
+    ],
+    "setup_modules": [
+        "lib.fireh_runner.setup_modules.python",
+        "lib.fireh_runner.setup_modules.pybuildtool"
+    ],
+    "python_version": "3.8",
+    "waf_version": "2.0.20",
+
+    "package_name": "frozen-django",
+    "default_project": "frozen_django",
+    "default_variant": "development",
+
+    "configuration": {
+        "development": {
+            "frozen_django": {
+                "shell_env": {
+                    "PYTHONPATH": ".."
+                }
+            }
+        }
+    }
+}

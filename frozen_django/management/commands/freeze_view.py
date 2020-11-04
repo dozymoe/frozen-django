@@ -1,3 +1,11 @@
+""" Django Command freeze_view
+
+Build html files from selected views.
+
+.. module:: frozen_django.management.commands.freeze_view
+.. moduleauthor:: Fahri Reza <i@dozy.moe>
+
+"""
 import json
 from urllib.parse import parse_qs
 #-
@@ -6,6 +14,11 @@ from django.core.management.base import BaseCommand
 from frozen_django.main import generate_static_view
 
 class Command(BaseCommand):
+    """ Implements Command freeze_view
+
+    Build html files from selected views.
+
+    """
     help = "Build static html files from Django views."
 
     def add_arguments(self, parser):
