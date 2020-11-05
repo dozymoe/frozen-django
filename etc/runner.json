@@ -20,7 +20,7 @@
         "development": {
             "frozen_django": {
                 "shell_env": {
-                    "PYTHONPATH": ".."
+                    "PYTHONPATH": "."
                 }
             }
         }

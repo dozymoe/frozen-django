@@ -13,7 +13,7 @@ replacement for celery in many cases.
 from django.conf import settings
 from uwsgi_tasks import task, TaskExecutor # pylint:disable=import-error
 #-
-from frozen_django.main import generate_static_view
+from .main import generate_static_view
 
 
 @task(executor=TaskExecutor.SPOOLER)

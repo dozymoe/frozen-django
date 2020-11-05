@@ -17,7 +17,7 @@ task scheduling.
 from celery import shared_task # pylint:disable=import-error
 from django.conf import settings
 #-
-from frozen_django.main import generate_static_view
+from .main import generate_static_view
 
 
 @shared_task
