@@ -6,11 +6,6 @@
 *.orig
 
 
-# pybuildtool
-
-/build.yml
-
-
 # python
 
 *.pyc

@@ -1,0 +1,8 @@
+-r requirements-production.txt
+
+coverage
+pybuildtool
+pylint
+pytest
+twine
+wheel

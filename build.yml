@@ -1,0 +1,35 @@
+frozen_django:
+  options:
+      pylint_config_file: etc/pylint.rc
+      pylint_work_dir: "./"
+
+  pylint:
+    raw_file_in: "{_1}/*.py"
+    raw_depend_in: etc/pylint.rc
+
+  commands:
+    pylint:
+      raw_file_in: "{_1}/management/{_2}/*.py"
+      raw_depend_in: etc/pylint.rc
+
+  tests:
+    pylint:
+      raw_file_in: "{_1}/{_2}/*.py"
+      raw_depend_in: etc/pylint.rc
+
+  unittest:
+    shell:
+      options:
+        command: ./run pybin coverage run --include=./* -m py.test
+      rule_in:
+        - "{_1}/pylint"
+        - "{_1}/commands/pylint"
+        - "{_1}/tests/pylint"
+      raw_depend_in: build.yml
+
+  coverage:
+    shell:
+      options:
+        command: ./run pybin coverage report -m --skip-covered
+      rule_in:
+        - "{_1}/unittest/shell"
