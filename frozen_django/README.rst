@@ -19,11 +19,11 @@ Inspired by:
 Requirements
 ------------
 
-* add `frozen_django` to your `INSTALLED_APPS`
+* add ``frozen_django`` to your ``INSTALLED_APPS``
 * will only process named urls
 * will only process urls with file extensions (.html, .json, .js, .xml, etc.)
 * Django Views with pagination must have **Link** HTTP header or
-  html tag `<link rel="next" />` in their content
+  html tag ``<link rel="next" />`` in their content
 
 
 Settings
@@ -36,9 +36,9 @@ Settings
 API
 ---
 
-* Django Command `freeze_view`
-* `frozen_django.tasks_celery.freeze_view`
-* `frozen_django.tasks_uwsgi.freeze_view`
+* Django Command ``freeze_view``
+* ``frozen_django.tasks_celery.freeze_view``
+* ``frozen_django.tasks_uwsgi.freeze_view``
 
 
 Examples
@@ -48,7 +48,7 @@ Here is an example of all pages rebuild:
 
 File novel/urls.py:
 
-.. code-block:: python
+.. code:: python
 
     from django.urls import path
     #-
@@ -58,16 +58,17 @@ File novel/urls.py:
     urlpatterns = [
         # must be before ViewSerie because that one is also a match
         path('index.html', views.Home.as_view(), name='Home'),
-        path('<str:slug>.<str:format>', ViewSerie.as_view(),
-            name='DisplaySerie'),
         path('index/pages/<int:page>.html', views.Home.as_view(),
             name='HomePages'),
+
+        path('<str:slug>.<str:format>', ViewSerie.as_view(),
+            name='DisplaySerie'),
     ]
 
 
 File website/views.py
 
-.. code-block:: python
+.. code:: python
 
     from django.views.generic import ListView
     #-
@@ -83,7 +84,7 @@ File website/views.py
 
 File website/management/commands/build.py
 
-.. code-block:: python
+.. code:: python
 
     from django.conf import settings
     from django.core.management.base import BaseCommand
