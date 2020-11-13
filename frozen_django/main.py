@@ -115,7 +115,7 @@ def follow_url(url, host, dest):
         return None
     view = partial(route_match.func, *route_match.args, **route_match.kwargs)
 
-    middlewares = settings.FROZEN_MIDDLEWARE or ()
+    middlewares = getattr(settings, 'FROZEN_MIDDLEWARE', ())
     middlewares = (import_string(x) for x in middlewares)
     for middleware in middlewares:
         view = middleware(view)
