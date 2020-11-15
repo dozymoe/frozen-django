@@ -12,7 +12,7 @@ URL = 'https://github.com/dozymoe/frozen-django'
 EMAIL = 'dozymoe@gmail.com'
 AUTHOR = 'Fahri Reza'
 REQUIRES_PYTHON = '>=3.5.0'
-VERSION = '1.0.0'
+VERSION = '1.0.1'
 
 # What packages are required for this module to be executed?
 REQUIRED = [

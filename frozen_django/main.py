@@ -20,7 +20,7 @@ from django.utils.module_loading import import_string
 _logger = logging.getLogger(__name__)
 
 
-def walk_resolvers(view_name, *patterns):
+def walk_resolvers(view_name, namespace, *patterns):
     """Traverse all of Django routes for find specific view.
 
     :param view_name: Fully qualified name of view
@@ -33,7 +33,14 @@ def walk_resolvers(view_name, *patterns):
     """
     for pat in patterns:
         if isinstance(pat, URLResolver):
-            for name in walk_resolvers(view_name, *pat.url_patterns):
+            if namespace and pat.namespace:
+                ns = namespace + ':' + pat.namespace
+            elif namespace:
+                ns = namespace
+            else:
+                ns = pat.namespace
+
+            for name in walk_resolvers(view_name, ns, *pat.url_patterns):
                 yield name
             continue
 
@@ -42,7 +49,11 @@ def walk_resolvers(view_name, *patterns):
         callback = pat.callback
         cls = getattr(callback, 'view_class', callback)
         if view_name == cls.__module__ + '.' + cls.__qualname__:
-            yield pat.name
+            if namespace:
+                nm = namespace + ':' + pat.name
+            else:
+                nm = pat.name
+            yield nm
 
 
 def find_next_http_page(response):
@@ -163,10 +174,12 @@ def generate_static_view(view_name, frozen_host, frozen_dest=None,
     base_dir = frozen_dest or settings.FROZEN_ROOT
     resolver = get_resolver()
 
-    for route_name in walk_resolvers(view_name, *resolver.url_patterns):
+    for route_name in walk_resolvers(view_name, None, *resolver.url_patterns):
         try:
             url = reverse(route_name, kwargs=kwargs)
         except NoReverseMatch:
+            _logger.warn("No reverse match for route: %s, kwargs: %s",
+                    route_name, kwargs)
             continue
         # Only if they already have file extensions
         if not os.path.splitext(url)[1]:
