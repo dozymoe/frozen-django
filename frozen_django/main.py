@@ -131,7 +131,8 @@ def follow_url(url, host, dest):
     for middleware in middlewares:
         view = middleware(view)
 
-    request = RequestFactory().get(urljoin(host, url.lstrip('/')))
+    request = RequestFactory(SERVER_NAME=host)\
+            .get(urljoin(host, url.lstrip('/')))
     response = view(request)
     content = response.render().content.decode()
 
