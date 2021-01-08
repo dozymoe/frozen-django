@@ -34,11 +34,11 @@ def walk_resolvers(view_name, namespace, *patterns):
     for pat in patterns:
         if isinstance(pat, URLResolver):
             if namespace and pat.namespace:
-                ns = namespace + ':' + pat.namespace
+                ns = namespace + ':' + pat.namespace # pylint:disable=invalid-name
             elif namespace:
-                ns = namespace
+                ns = namespace # pylint:disable=invalid-name
             else:
-                ns = pat.namespace
+                ns = pat.namespace # pylint:disable=invalid-name
 
             for name in walk_resolvers(view_name, ns, *pat.url_patterns):
                 yield name
@@ -179,7 +179,7 @@ def generate_static_view(view_name, frozen_host, frozen_dest=None,
         try:
             url = reverse(route_name, kwargs=kwargs)
         except NoReverseMatch:
-            _logger.warn("No reverse match for route: %s, kwargs: %s",
+            _logger.warning("No reverse match for route: %s, kwargs: %s",
                     route_name, kwargs)
             continue
         # Only if they already have file extensions

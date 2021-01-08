@@ -1,6 +1,7 @@
 -r requirements-production.txt
 
 coverage
+django
 pybuildtool
 pylint
 pytest
