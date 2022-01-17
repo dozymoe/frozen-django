@@ -139,7 +139,7 @@ def follow_url(url, host, dest):
     filepath = urlparse(url).path
     fullpath = os.path.join(dest, filepath.lstrip('/'))
     os.makedirs(os.path.dirname(fullpath), exist_ok=True)
-    with open(fullpath, 'w') as f: # pylint:disable=invalid-name
+    with open(fullpath, 'w', encoding='utf-8') as f: # pylint:disable=invalid-name
         f.write(content)
 
     mime, _ = guess_type(url)
