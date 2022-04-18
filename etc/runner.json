@@ -9,8 +9,8 @@
         "lib.fireh_runner.setup_modules.python",
         "lib.fireh_runner.setup_modules.pybuildtool"
     ],
-    "python_version": "3.8",
-    "waf_version": "2.0.20",
+    "python_version": "3.9",
+    "waf_version": "2.0.23",
 
     "package_name": "frozen-django",
     "default_project": "frozen_django",
