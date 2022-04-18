@@ -20,7 +20,6 @@ Requirements
 ------------
 
 * add ``frozen_django`` to your ``INSTALLED_APPS``
-* will only process named urls
 * will only process urls with file extensions (.html, .json, .js, .xml, etc.)
 * Django Views with pagination must have **Link** HTTP header or
   html tag ``<link rel="next" />`` in their content
@@ -29,7 +28,8 @@ Requirements
 Settings
 --------
 
-* FROZEN_ROOT (should be filled)
+* FROZEN_ROOT (should be filled, can be dict for multisite, keys are
+  items in ALLOWED_HOSTS)
 * FROZEN_MIDDLEWARE (optional)
 
 
@@ -46,24 +46,98 @@ Examples
 
 Here is an example of all pages rebuild:
 
-File novel/urls.py:
+File blog/settings.py
 
 .. code:: python
 
-    from django.urls import path
-    #-
-    from novel_serie.views import ViewSerie
+    from django.utils.translation import gettext_lazy as _
+
+    ALLOWED_HOSTS = ['www.blog.id', 'www.planet.id']
+
+    INSTALLED_APPS = [
+        'frozen_django',
+    ]
+
+    MIDDLEWARE = [
+        'django.middleware.locale.LocaleMiddleware',
+        'django.contrib.sites.middleware.CurrentSiteMiddleware',
+    ]
+
+    FROZEN_MIDDLEWARE = [
+        'django.middleware.locale.LocaleMiddleware',
+        'django.contrib.sites.middleware.CurrentSiteMiddleware',
+    ]
+
+    USE_I18N = True
+    LANGUAGE_CODE = 'en'
+
+    LANGUAGES = (
+        ('en', _("English")),
+        ('id', _("Bahasa Indonesia")),
+    )
+
+    FROZEN_ROOT = {
+        'www.blog.id': ROOT_DIR/'public'/'blog',
+        'www.planet.id': ROOT_DIR/'public'/'planet',
+    }
+
+
+File blog/urls.py:
+
+.. code:: python
+
+    from django.conf.urls.i18n import i18n_patterns
+    from django.utils.translation import gettext_lazy as _
     from website import views
 
-    urlpatterns = [
-        # must be before ViewSerie because that one is also a match
-        path('index.html', views.Home.as_view(), name='Home'),
-        path('index/pages/<int:page>.html', views.Home.as_view(),
-            name='HomePages'),
+    urlpatterns = i18n_patterns(
+        path(_('posts/'), include('blog_post.urls', namespace='blogpost')),
+        path('index.<str:format>', views.Home.as_view(), name='home'),
+        path('index/pages/<int:page>.<str:format>', views.Home.as_view(),
+            name='homepages'),
+        prefix_default_language=True,
+    )
 
-        path('<str:slug>.<str:format>', ViewSerie.as_view(),
-            name='DisplaySerie'),
+
+File blog_post/urls.py:
+
+.. code:: python
+
+    from . import views
+
+    app_name = 'blog_post'
+
+    urlpatterns = [
+        path('<str:slug>.<str:format>', views.Display.as_view(), name='display'),
     ]
+
+
+File blog_post/signals.py
+
+.. code:: python
+
+    from website.tasks import hosts_freeze_view
+
+    def post_updated(sender, instance, **kwargs):
+        hosts_freeze_view('website.views.Home', format='html')
+        hosts_freeze_view('blog_post.views.Display', slug=instance.slug,
+                format='html')
+
+
+File blog_post/apps.py
+
+.. code:: python
+
+    from django.db.models.signals import post_save
+
+    class BlogPostConfig(AppConfig):
+        name = 'blog_post'
+
+        def ready(self):
+            from . import models
+            from .signals import post_updated
+
+            post_save.connect(post_updated, sender=models.BlogPost)
 
 
 File website/views.py
@@ -72,39 +146,45 @@ File website/views.py
 
     from django.views.generic import ListView
     #-
-    from novel_serie.models import Serie
+    from blog_post.models import Post
 
     class Home(ListView):
         template_name = 'website/home.html'
         paginate_by = 2
 
         def get_queryset(self):
-            return Serie.objects.all()
+            return Post.objects.all()
 
 
-File website/management/commands/build.py
+File website/tasks.py
 
 .. code:: python
 
     from django.conf import settings
-    from django.core.management.base import BaseCommand
-    from frozen_django.tasks_uwsgi import freeze_view
-    #-
-    from novel_serie.models import Serie
+    from frozen_django.main import generate_static_view
+    from uwsgi_tasks import task, TaskExecutor
 
-    class Command(BaseCommand):
-        help = "Build static html files."
+    @task(executor=TaskExecutor.SPOOLER)
+    def freeze_view(view_name, base_url, **kwargs):
+        generate_static_view(view_name, frozen_host=base_url, **kwargs)
 
-        def build(self, view_name, **kwargs):
-            for host in settings.ALLOWED_HOSTS:
-                freeze_view(view_name, base_url=host, **kwargs)
 
-        def handle(self, *args, **kwargs):
-            self.build('website.views.Home') # will also build pages.
+    def hosts_freeze_view(view_name, **kwargs):
+        for host in settings.ALLOWED_HOSTS:
+            freeze_view(view_name, base_url=host, **kwargs)
 
-            for obj in Serie.objects.all():
-                self.build('novel_serie.views.ViewSerie', slug=obj.slug,
-                        format='html')
+
+File website/templates/website/home.html
+
+.. code:: html
+
+      <html>
+        <head>
+          {% if page_obj.has_next %}
+            <link rel="next" href="{% url 'homepages' page=page_obj.next_page_number format='html' %}">
+          {% endif %}
+        </head>
+      </html>
 
 
 .. _django-bakery: https://pypi.org/project/django-bakery/

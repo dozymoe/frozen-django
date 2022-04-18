@@ -1,6 +1,6 @@
 # pylint:disable=missing-module-docstring,missing-function-docstring
 from django.core.management.base import BaseCommand
-from frozen_django.management.commands import freeze_view
+from ..management.commands import freeze_view
 
 def test_freeze_view():
     obj = freeze_view.Command()

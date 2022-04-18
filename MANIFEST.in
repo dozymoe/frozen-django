@@ -1,9 +1,14 @@
 include frozen_django/README.rst
 exclude run
 exclude wscipt
+exclude README-Upload.rst
 exclude requirements.txt
 exclude build.yml
 exclude .git*
 exclude MANIFEST.in
+prune docs
+prune docs_build
 prune etc
 prune lib
+prune frozen_django/tests
+prune djangoprj

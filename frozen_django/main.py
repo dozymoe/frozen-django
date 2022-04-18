@@ -8,19 +8,23 @@ from functools import partial
 import logging
 from mimetypes import guess_type
 import os
+from typing import Mapping
 from urllib.parse import urljoin, urlparse
 #-
 from bs4 import BeautifulSoup
 from django.conf import settings
 from django.test.client import RequestFactory
 from django.urls import get_resolver, URLResolver
-from django.urls import resolve, reverse, NoReverseMatch, Resolver404
+from django.urls import get_script_prefix, resolve, Resolver404
+from django.urls.resolvers import get_ns_resolver
+from django.utils import translation
+from django.utils.encoding import iri_to_uri
 from django.utils.module_loading import import_string
 
 _logger = logging.getLogger(__name__)
 
 
-def walk_resolvers(view_name, namespace, *patterns):
+def walk_resolvers(view_name, resolver, ns_pattern, ns_converters):
     """Traverse all of Django routes for find specific view.
 
     :param view_name: Fully qualified name of view
@@ -31,29 +35,26 @@ def walk_resolvers(view_name, namespace, *patterns):
        An example of view_name: website.views.Home
 
     """
-    for pat in patterns:
+    if resolver.pattern.converters:
+        sub_ns_converters = ns_converters.copy()
+        sub_ns_converters.update(resolver.pattern.converters)
+    else:
+        sub_ns_converters = ns_converters
+
+    for pat in resolver.url_patterns:
         if isinstance(pat, URLResolver):
-            if namespace and pat.namespace:
-                ns = namespace + ':' + pat.namespace # pylint:disable=invalid-name
-            elif namespace:
-                ns = namespace # pylint:disable=invalid-name
-            else:
-                ns = pat.namespace # pylint:disable=invalid-name
-
-            for name in walk_resolvers(view_name, ns, *pat.url_patterns):
-                yield name
+            sub_ns_pattern = ns_pattern + pat.pattern.regex.pattern.lstrip('^')\
+                    .rstrip('$')
+            for result in walk_resolvers(view_name, pat, sub_ns_pattern,
+                    sub_ns_converters):
+                yield result
             continue
 
-        if not pat.name:
-            continue
-        callback = pat.callback
-        cls = getattr(callback, 'view_class', callback)
-        if view_name == cls.__module__ + '.' + cls.__qualname__:
-            if namespace:
-                nm = namespace + ':' + pat.name
-            else:
-                nm = pat.name
-            yield nm
+        if pat.lookup_str == view_name:
+            if ns_pattern:
+                resolver = get_ns_resolver(ns_pattern, resolver,
+                        tuple(ns_converters.items()))
+            yield resolver, pat.name
 
 
 def find_next_http_page(response):
@@ -152,16 +153,18 @@ def follow_url(url, host, dest):
     return None
 
 
-def generate_static_view(view_name, frozen_host, frozen_dest=None,
+def generate_static_view(view_name, frozen_host, frozen_dest=None, urlconf=None,
         **kwargs):
     """Capture the contents of all urls related to specific view
 
     :param view_name: Fully qualified name of view
-    :type view_name: str.
+    :type view_name: str
     :param frozen_host: absolute url, base url
-    :type frozen_host: str.
+    :type frozen_host: str
     :param frozen_dest: output directory for generated files
-    :type forzen_dest: str.
+    :type frozen_dest: str
+    :param urlconf: django urls module
+    :type urlconf: str
 
     .. note::
 
@@ -171,20 +174,34 @@ def generate_static_view(view_name, frozen_host, frozen_dest=None,
 
        An example of frozen_dest: /var/www/html
 
+       An example of urlconf: project.urls
+
     """
-    base_dir = frozen_dest or settings.FROZEN_ROOT
-    resolver = get_resolver()
+    if frozen_dest:
+        base_dir = frozen_dest
+    elif isinstance(settings.FROZEN_ROOT, Mapping):
+        domain = urlparse(frozen_host).netloc.split(':')[0]
+        base_dir = settings.FROZEN_ROOT[domain]
+    else:
+        base_dir = settings.FROZEN_ROOT
 
-    for route_name in walk_resolvers(view_name, None, *resolver.url_patterns):
-        try:
-            url = reverse(route_name, kwargs=kwargs)
-        except NoReverseMatch:
-            _logger.warning("No reverse match for route: %s, kwargs: %s",
-                    route_name, kwargs)
-            continue
-        # Only if they already have file extensions
-        if not os.path.splitext(url)[1]:
-            continue
+    resolver = get_resolver(urlconf)
+    prefix = get_script_prefix()
 
-        while url:
-            url = follow_url(url, frozen_host, base_dir)
+    for langcode, _ in settings.LANGUAGES:
+        translation.activate(langcode)
+
+        done_urls = set()
+        for solver, view in walk_resolvers(view_name, resolver, '', {}):
+            url = iri_to_uri(solver._reverse_with_prefix(view, prefix,
+                    **kwargs))
+            if url in done_urls:
+                continue
+            done_urls.add(url)
+
+            # Only if they already have file extensions
+            if not os.path.splitext(url)[1]:
+                continue
+
+            while url:
+                url = follow_url(url, frozen_host, base_dir)
