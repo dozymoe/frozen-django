@@ -9,7 +9,7 @@ import logging
 from mimetypes import guess_type
 import os
 from typing import Mapping
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urlparse
 #-
 from bs4 import BeautifulSoup
 from django.conf import settings
@@ -102,7 +102,7 @@ def find_next_html_page(response, content):
     return None
 
 
-def follow_url(url, host, dest):
+def follow_url(url, host, dest, langcode):
     """Capture response body from a url, follow next pagination page
 
     :param url: Relative url, valid Django route
@@ -132,8 +132,9 @@ def follow_url(url, host, dest):
     for middleware in middlewares:
         view = middleware(view)
 
-    request = RequestFactory(SERVER_NAME=host)\
-            .get(urljoin(host, url.lstrip('/')))
+    headers = {'Accept-Language': langcode}
+    request = RequestFactory(SERVER_NAME=host, HTTP_HOST=host).get(url,
+            **headers)
     response = view(request)
     content = response.render().content.decode()
 
@@ -154,7 +155,7 @@ def follow_url(url, host, dest):
 
 
 def generate_static_view(view_name, frozen_host, frozen_dest=None, urlconf=None,
-        **kwargs):
+        langcode=None, **kwargs):
     """Capture the contents of all urls related to specific view
 
     :param view_name: Fully qualified name of view
@@ -185,13 +186,14 @@ def generate_static_view(view_name, frozen_host, frozen_dest=None, urlconf=None,
     else:
         base_dir = settings.FROZEN_ROOT
 
+    if langcode is None:
+        langcode = settings.LANGUAGE_CODE
+
     resolver = get_resolver(urlconf)
     prefix = get_script_prefix()
+    done_urls = set()
 
-    for langcode, _ in settings.LANGUAGES:
-        translation.activate(langcode)
-
-        done_urls = set()
+    with translation.override(langcode):
         for solver, view in walk_resolvers(view_name, resolver, '', {}):
             url = iri_to_uri(solver._reverse_with_prefix(view, prefix,
                     **kwargs))
@@ -204,4 +206,4 @@ def generate_static_view(view_name, frozen_host, frozen_dest=None, urlconf=None,
                 continue
 
             while url:
-                url = follow_url(url, frozen_host, base_dir)
+                url = follow_url(url, frozen_host, base_dir, langcode)
