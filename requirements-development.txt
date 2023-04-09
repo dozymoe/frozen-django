@@ -1,6 +1,7 @@
 -r requirements-production.txt
 
 build
+chevron
 coverage
 django
 pybuildtool

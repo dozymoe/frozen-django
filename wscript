@@ -16,12 +16,12 @@ else:
 
 def build(bld):
     # load main configuration file
-    import pystache, yaml
+    import chevron, yaml
     from pybuildtool.misc.resource import prepare_targets
     from pybuildtool.misc.yaml_utils import OrderedDictYAMLLoader
     conf_file = os.path.join(bld.path.abspath(), 'build.yml')
     with open(conf_file) as f:
-        tasks = pystache.render(f.read(), dict(os.environ))
+        tasks = chevron.render(f.read(), dict(os.environ))
         conf = yaml.load(tasks, Loader=OrderedDictYAMLLoader)
     # parse data as waf tasks
     prepare_targets(conf, bld)

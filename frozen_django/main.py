@@ -195,7 +195,7 @@ def generate_static_view(view_name, frozen_host, frozen_dest=None, urlconf=None,
 
     with translation.override(langcode):
         for solver, view in walk_resolvers(view_name, resolver, '', {}):
-            url = iri_to_uri(solver._reverse_with_prefix(view, prefix,
+            url = iri_to_uri(solver._reverse_with_prefix(view, prefix, # pylint:disable=protected-access
                     **kwargs))
             if url in done_urls:
                 continue
